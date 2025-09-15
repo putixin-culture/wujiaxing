@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>功课记录板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+  :root{
+    /* Brand palette - FAEECA */
+    --brand:#FAEECA;
+    --brand-ink:#5f4a1f;
+    --bg:#fffaf2;
+    --card:#ffffff;
+    --text:#222;
+    --muted:#6b6b6b;
+    --line:#efe3c7;
+    --chip:#fff4da;
+    --chip-on:#f6e3b7;
+    --danger:#d64545;
+    --ok:#3aa272;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial}
+  input, select, textarea, button{font:inherit}
+  input, select, textarea{
+    -webkit-appearance:none; appearance:none; -moz-appearance:none;
+    background:#fff; color:var(--text);
+    border:1px solid var(--line); border-radius:10px; outline:none;
+    padding:10px 12px;
+  }
+  input:focus, select:focus, textarea:focus{ outline:2px solid var(--brand-ink); outline-offset:1px; box-shadow:none; }
+  select{ padding-right:36px; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235f4a1f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat:no-repeat; background-position:right 10px center; background-size:14px }
+  select::-ms-expand{display:none}
+  input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus{ -webkit-box-shadow:0 0 0 1000px #fff inset !important; -webkit-text-fill-color:var(--text)!important }
+
+  .container{max-width:1120px;margin:0 auto;padding:16px 14px 100px}
+  header{position:sticky;top:0;z-index:10;background:var(--bg);padding:10px 0 8px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+  /* 顶部一排：强制同一行，不再错行；标题自动省略号 */
+  .bar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow:hidden}
+  .title{font-size:20px;font-weight:800;letter-spacing:.5px;margin-right:auto;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .btn{appearance:none;border:1px solid var(--brand-ink);border-radius:14px;background:var(--brand);color:var(--brand-ink);padding:10px 14px;font-weight:700;cursor:pointer;flex:0 0 auto}
+  .btn.ghost{background:transparent;color:var(--brand-ink);border:1px solid var(--brand-ink)}
+  .btn.warn{background:#fff;color:#b03a3a;border-color:#b03a3a}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+  .card{background:var(--card);border-radius:18px;border:1px solid var(--line);padding:14px 14px 12px;box-shadow:0 1px 0 rgba(0,0,0,.04)}
+  .row{display:flex;align-items:center}
+  .row.space{justify-content:space-between;gap:8px}
+  .name{font-size:18px;font-weight:800}
+  .meta{color:var(--muted);font-size:13px}
+  .stat{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:6px}
+  .pill{background:var(--chip);border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:13px}
+  .primary{color:var(--brand-ink);background:var(--brand);border-color:var(--brand-ink)}
+  .muted{color:var(--muted)}
+  .actions{display:flex;gap:8px;align-items:center}
+  .link{font-weight:700;color:var(--brand-ink);text-decoration:none;background:var(--brand);border:1px solid var(--brand-ink);padding:8px 10px;border-radius:12px;cursor:pointer}
+  footer{position:fixed;left:0;right:0;bottom:0;border-top:1px solid var(--line);background:var(--bg);padding:8px}
+  .note{max-width:1120px;margin:0 auto;font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block;margin-right:6px}
+  dialog{border:0;border-radius:18px;padding:14px}
+  .tbl{width:100%;border-collapse:separate;border-spacing:0 8px}
+  .tbl th{font-size:13px;color:#555;text-align:left;padding:2px 6px}
+  .tbl td{background:var(--card);border:1px solid var(--line);padding:10px;border-radius:12px}
+  .row-actions{display:flex;gap:8px}
+  .kpis{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0}
+  .kpis .box{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--chip);border:1px solid var(--line);color:#333}
+  .checkgrid{display:grid;grid-template-columns:repeat(6, minmax(0,1fr));gap:12px;margin:10px 0}
+  .check-item{display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;padding:16px 6px;background:#fff;cursor:pointer;font-weight:700;color:#444;user-select:none}
+  .check-item.on{background:var(--chip-on);border-color:var(--brand-ink);color:var(--brand-ink)}
+  .flex{display:flex;gap:8px;align-items:center}
+  .right{margin-left:auto}
+  .center{display:flex;justify-content:center;align-items:center}
+  .subtle{font-size:12px;color:#777}
+  /* 查看记录标题不换行，超出省略 */
+  #dlgView .view-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0;}
+  #dlgView .view-head{align-items:center;gap:8px;position:sticky;top:0;background:var(--card);padding:8px 0;z-index:20;border-bottom:1px solid var(--line);} 
+  #dlgView{max-height:90dvh;overflow:auto;} 
+  #dlgView::backdrop{background:rgba(0,0,0,.35);} 
+  /* 去除 iOS Safari 的默认蓝色 focus ring，保持与管理员面板一致 */
+  #dlgView .btn:focus, #dlgView .btn:focus-visible{outline:none!important;box-shadow:none!important;}
+  #dlgAdmin .btn:focus, #dlgAdmin .btn:focus-visible{outline:none!important;box-shadow:none!important;}
+
+  /* Entry Gate - button under input */
+  #gate{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(1px);z-index:50}
+  #gate .panel{width:min(92vw,600px);background:#fff;border-radius:22px;padding:26px 22px;border:1px solid var(--line);box-shadow:0 10px 35px rgba(0,0,0,.12)}
+  #gate h2{margin:0 0 14px;font-size:22px}
+  #gate .vstack{display:flex;flex-direction:column;gap:12px}
+  #gate .btn{min-height:44px}
+</style>
+</head>
+<body>
+  <!-- Page entry password -->
+  <div id="gate">
+    <div class="panel">
+      <h2>请输入访问密码</h2>
+      <div class="vstack">
+        <input id="gateCode" type="password" placeholder="访问码" />
+        <button id="gateEnter" class="btn">进入</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" style="display:none" id="app">
+    <header>
+      <div class="bar">
+        <div class="title">功课记录板</div>
+        <button id="btnAdd" class="btn">＋ 添加记录</button>
+        <button id="btnAdmin" class="btn ghost">管理员入口</button>
+      </div>
+      </header>
+
+    <div id="memberList" class="grid"></div>
+  </div>
+
+  <footer>
+    <div class="note">
+      <span class="dot" id="rtDot"></span> 实时已连接。
+      <span class="subtle">新增 / 删除会自动刷新排序（最近提交排最上）。</span>
+    </div>
+  </footer>
+
+  <!-- 添加记录弹窗（新增：可选的“视频进度”调整） -->
+  <dialog id="dlgAdd" style="max-width:560px">
+    <form id="formAdd" method="dialog">
+      <h3 style="margin:0 0 8px">添加记录</h3>
+      <div style="display:grid;gap:10px">
+        <label>成员
+          <select id="addMember" required></select>
+        </label>
+        <label>项目
+          <select id="addItem" required>
+            <option>GMZ</option><option>GY</option><option>FX</option>
+            <option>BZM</option><option>SSYJ</option><option>静坐</option><option>全身运动</option>
+          </select>
+        </label>
+        <label>数量
+          <input id="addQty" type="number" inputmode="numeric" min="1" value="1" required />
+        </label>
+        <label>备注
+          <input id="addNote" placeholder="可留空" />
+        </label>
+        <label>视频进度（可选）
+          <select id="addVideoEp"></select>
+        </label>
+      </div>
+      <div class="flex" style="justify-content:flex-end;margin-top:12px">
+        <button type="button" id="btnCancelAdd" class="btn ghost">取消</button>
+        <button type="submit" class="btn">提交</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 查看记录弹窗 -->
+  <dialog id="dlgView" style="max-width:860px;width:96vw">
+    <div class="flex view-head">
+      <h3 id="viewTitle" class="view-title" style="margin:0 8px 0 0">记录</h3>
+      <button id="btnCloseView" class="btn ghost right">关闭</button>
+    </div>
+
+    <div class="kpis" id="viewKpis"></div>
+
+    <div>
+      <div class="subtle" style="margin:6px 0">卡片显示项目（固定包含「静坐」，这里最多再选 2 项）：</div>
+      <div id="pickArea" class="checkgrid"></div>
+      <div class="flex" style="justify-content:flex-end;margin:6px 0 12px">
+        <div class="subtle right" id="pickCount">已选 0 / 2</div>
+        <button class="btn" id="btnSaveDisplay">保存显示项目</button>
+      </div>
+    </div>
+
+    <div class="flex" style="margin:10px 0">
+      <select id="filterItem"></select>
+      <div class="right subtle">共 <b id="totalRows">0</b> 条</div>
+    </div>
+
+    <table class="tbl" id="tblRecords">
+      <thead>
+        <tr>
+          <th style="width:190px">时间</th>
+          <th>项目</th>
+          <th style="width:100px">数量</th>
+          <th>备注</th>
+          <th style="width:120px">操作</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyRecords"></tbody>
+    </table>
+  </dialog>
+
+  <!-- 管理员面板（无 PIN） -->
+  <dialog id="dlgAdmin" style="max-width:980px;width:96vw">
+    <div class="flex">
+      <h3 style="margin:0">管理员面板</h3>
+      <button id="btnCloseAdmin" class="btn ghost right">关闭</button>
+    </div>
+
+    <div style="margin:10px 0;display:flex;gap:8px;align-items:center">
+      <input id="newMemberName" type="text" placeholder="新增成员名字" style="flex:1" />
+      <button id="btnAddMember" class="btn">添加成员</button>
+    </div>
+
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th style="width:220px">成员</th>
+          <th style="width:260px">默认展示项目（单选）</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyAdmin"></tbody>
+    </table>
+
+    <div class="subtle" style="margin-top:8px">说明：成员可在“查看记录”里再自选 2 个项目用于卡片展示（固定包含“静坐”）。</div>
+  </dialog>
+
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = "https://bpgzzgmghkcwpoalhrrd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwZ3p6Z21naGtjd3BvYWxocnJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTEwMTgsImV4cCI6MjA3MzA2NzAxOH0.5PtBu34Gi0NjupUgVSQZqYWZdkfjVQFhucyfwLINI1g";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/** 访问口令 / 管理员口令 */
+const ENTRY_CODE  = "1666";  // 进入页面的访问码
+const ADMIN_CODE  = "8899";  // 管理员入口口令
+
+/** 固定显示 + 候选项 */
+const FIXED_METRIC = "静坐";
+const ITEM_OPTIONS = ["GMZ","GY","FX","BZM","SSYJ","静坐","全身运动"];
+const ITEM_FOR_DROPDOWN = ITEM_OPTIONS.filter(x => x !== FIXED_METRIC);
+
+/** 状态 */
+let isAdmin = false;
+let members = [];                 // [{id,name,is_active,disp_metric1,disp_metric2,video_ep}]
+const statsByMember = new Map();  // id -> { totals: { item:sum }, last: ISO String }
+
+const $app = document.getElementById("app");
+const $gate = document.getElementById("gate");
+const $gateCode = document.getElementById("gateCode");
+const $gateEnter = document.getElementById("gateEnter");
+$gateEnter.onclick = () => { const v = ($gateCode.value || "").trim(); if (v === ENTRY_CODE) { $gate.style.display = "none"; $app.style.display="block"; startApp(); } else alert("访问码不正确"); };
+$gateCode.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ $gateEnter.click(); }});
+
+const $list = document.getElementById("memberList");
+const $btnAdmin = document.getElementById("btnAdmin");
+const $btnAdd = document.getElementById("btnAdd");
+
+const $dlgAdd = document.getElementById("dlgAdd");
+const $formAdd = document.getElementById("formAdd");
+const $addMember = document.getElementById("addMember");
+const $addItem = document.getElementById("addItem");
+const $addQty = document.getElementById("addQty");
+const $addNote = document.getElementById("addNote");
+const $addVideoEp = document.getElementById("addVideoEp");
+
+function buildEpOptions(includeNone=true){
+  const arr = [];
+  if (includeNone) arr.push('<option value="">不调整</option>');
+  for (let i=1;i<=144;i++) arr.push(`<option value="${i}">第 ${i} 集</option>`);
+  return arr.join('');
+}
+$addVideoEp.innerHTML = buildEpOptions(true);
+
+document.getElementById("btnCancelAdd").onclick = ()=> $dlgAdd.close();
+
+const $dlgAdmin = document.getElementById("dlgAdmin");
+const $tbodyAdmin = document.getElementById("tbodyAdmin");
+const $newMemberName = document.getElementById("newMemberName");
+document.getElementById("btnCloseAdmin").onclick = ()=> $dlgAdmin.close();
+document.getElementById("btnAddMember").onclick = onAddMember;
+
+const $dlgView = document.getElementById("dlgView");
+const $btnCloseView = document.getElementById("btnCloseView");
+$btnCloseView.onclick = ()=> $dlgView.close();
+const $viewTitle = document.getElementById("viewTitle");
+const $viewKpis  = document.getElementById("viewKpis");
+const $pickArea  = document.getElementById("pickArea");
+const $pickCount = document.getElementById("pickCount");
+const $btnSaveDisplay = document.getElementById("btnSaveDisplay");
+const $filterItem = document.getElementById("filterItem");
+const $tbodyRecords = document.getElementById("tbodyRecords");
+const $totalRows = document.getElementById("totalRows");
+
+let currentViewMemberId = null;
+
+/*------------------------- 启动 -------------------------*/
+function startApp(){ loadAll(); bindRealtime(); }
+
+/*------------------------- 数据加载 -------------------------*/
+async function loadAll() {
+  const [mRes, rRes] = await Promise.all([
+    supabase.from("members").select("*").order("id"),
+    supabase.from("records").select("id,member_id,item,quantity,note,submitted_at,is_deleted")
+  ]);
+  if (mRes.error) { console.error(mRes.error); return; }
+  if (rRes.error) { console.error(rRes.error); return; }
+
+  members = (mRes.data || []).filter(m => m.is_active !== false);
+  statsByMember.clear();
+  (rRes.data || []).forEach(addRecordToStats);
+  renderAll();
+}
+
+function addRecordToStats(r) {
+  if (r.is_deleted) return;
+  const id = r.member_id;
+  let s = statsByMember.get(id);
+  if (!s) { s = { totals: {}, last: null }; statsByMember.set(id, s); }
+  const key = r.item || "";
+  const qty = Number(r.quantity || 0);
+  s.totals[key] = (s.totals[key] || 0) + qty;
+  if (!s.last || new Date(r.submitted_at) > new Date(s.last)) s.last = r.submitted_at;
+}
+
+/*------------------------- 渲染 -------------------------*/
+function renderAll() {
+  $addMember.innerHTML = members.map(m => `<option value="${m.id}">${m.name}</option>`).join("");
+  const sorted = [...members].sort((a,b) => {
+    const la = statsByMember.get(a.id)?.last;
+    const lb = statsByMember.get(b.id)?.last;
+    return new Date(lb || 0) - new Date(la || 0);
+  });
+  $list.innerHTML = "";
+  sorted.forEach(m => $list.appendChild(renderCard(m)));
+  if ($dlgAdmin.open) renderAdminTable();
+}
+
+function renderCard(m) {
+  const s = statsByMember.get(m.id) || { totals:{}, last:null };
+  const jz = s.totals[FIXED_METRIC] || 0;
+  const pick = [m.disp_metric1, m.disp_metric2].filter(Boolean);
+  const p1 = pick[0] || "";
+  const p2 = pick[1] || "";
+  const ep = Number(m.video_ep || 0);
+
+  const el = document.createElement("div");
+  el.className = "card";
+  const pills = [];
+  pills.push(`<span class="pill primary">静坐总数：<b>${jz}</b></span>`);
+  if (p1) pills.push(`<span class="pill"> ${p1}：<b>${s.totals[p1] || 0}</b></span>`);
+  if (p2) pills.push(`<span class="pill"> ${p2}：<b>${s.totals[p2] || 0}</b></span>`);
+
+  const videoPill = `<span class="pill primary">视频进度：<b>${ep>0?`第 ${ep} 集`:'未设置'}</b></span>`;
+
+  el.innerHTML = `
+    <div class="row space">
+      <div class="name">${m.name}</div>
+      <div class="actions">
+        ${videoPill}
+        <a class="link" data-act="view" href="javascript:">查看记录</a>
+      </div>
+    </div>
+
+    <div class="stat">${pills.join("")}
+      <span class="muted" style="margin-left:auto">${s.last ? `最近：${fmtCN(s.last)}` : "尚无提交"}</span>
+    </div>`;
+
+  el.querySelector('[data-act="view"]').onclick = () => openViewDialog(m.id);
+  return el;
+}
+
+/* 中国时区显示（Asia/Shanghai） */
+function fmtCN(iso){
+  try{
+    const d = new Date(iso);
+    const opts = { timeZone:'Asia/Shanghai', month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false };
+    const s = new Intl.DateTimeFormat('zh-CN', opts).format(d);
+    return s.replace('年','-').replace('月','-').replace('日','');
+  }catch{ return iso; }
+}
+
+/*------------------------- 实时订阅 -------------------------*/
+let _chanRecords=null,_chanMembers=null;
+function bindRealtime(){
+  if(_chanRecords||_chanMembers) return;
+  _chanRecords = supabase.channel('realtime-records')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'records'},payload=>{ addRecordToStats(payload.new); renderAll(); if ($dlgView.open && payload.new.member_id===currentViewMemberId) reloadRecordsInView(); })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'records'},async payload=>{ const id=payload.new.member_id; const {data}=await supabase.from('records').select('id,member_id,item,quantity,note,submitted_at,is_deleted').eq('member_id',id); statsByMember.set(id,{totals:{},last:null}); (data||[]).forEach(addRecordToStats); renderAll(); if($dlgView.open&&id===currentViewMemberId) reloadRecordsInView(); })
+    .subscribe((status)=>{ document.getElementById('rtDot').style.background=(status==='SUBSCRIBED'?'var(--ok)':'#aaa'); });
+  _chanMembers = supabase.channel('realtime-members')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'members'},p=>{ if(p.new.is_active===false) return; members.push(p.new); renderAll(); })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'members'},p=>{ const i=members.findIndex(m=>m.id===p.new.id); if(i>=0){ if(p.new.is_active===false) members.splice(i,1); else members[i]=p.new; renderAll(); } })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'members'},p=>{ const i=members.findIndex(m=>m.id===p.old.id); if(i>=0){ members.splice(i,1); renderAll(); } })
+    .subscribe();
+}
+
+/*------------------------- 管理入口 -------------------------*/
+$btnAdmin.onclick = ()=>{ const pin=prompt("请输入管理员密码"); if(pin&&pin.trim()===ADMIN_CODE){ isAdmin=true; renderAdminTable(); $dlgAdmin.showModal(); } else alert("密码不正确"); };
+
+function renderAdminTable(){
+  const rows = members.map(m=>{
+    const opt = ITEM_FOR_DROPDOWN.map(x=>`<option ${m.disp_metric1===x?'selected':''}>${x}</option>`).join("");
+    return `<tr data-id="${m.id}"><td><input class="ad-name" type="text" value="${escapeHtml(m.name)}" /></td><td><select class="ad-default"><option value="">（不设置）</option>${opt}</select></td><td class="row-actions"><button class="btn ghost ad-save">保存</button><button class="btn warn ad-del">删除成员</button></td></tr>`;
+  }).join("");
+  $tbodyAdmin.innerHTML = rows || `<tr><td colspan="3" class="center" style="padding:14px">暂无成员</td></tr>`;
+  $tbodyAdmin.querySelectorAll('.ad-save').forEach(btn=>{ btn.onclick=async(e)=>{ if(!isAdmin) return; const tr=e.target.closest('tr'); const id=Number(tr.dataset.id); const name=tr.querySelector('.ad-name').value.trim(); const def=tr.querySelector('.ad-default').value||null; await saveMemberByRpcOrUpdate(id,{name,disp_metric1:def}); await loadAll(); }; });
+  $tbodyAdmin.querySelectorAll('.ad-del').forEach(btn=>{ btn.onclick=async(e)=>{ if(!isAdmin) return; const tr=e.target.closest('tr'); const id=Number(tr.dataset.id); if(!confirm('确认将该成员设为禁用？（软删除 is_active=false）')) return; const ok=await callRpc('disable_member',{p_id:id}); if(!ok){ const {error}=await supabase.from('members').update({is_active:false}).eq('id',id); if(error) alert('删除失败：'+error.message); } await loadAll(); }; });
+}
+
+async function onAddMember(){ if(!isAdmin){ alert('请先通过管理员口令'); return; } const name=$newMemberName.value.trim(); if(!name){ alert('请输入名字'); return; } let ok=await callRpc('add_member',{p_name:name,p_pin:null}); if(!ok){ const {error}=await supabase.from('members').insert({name,is_active:true}); if(error){ alert('添加失败：'+error.message); return; } } $newMemberName.value=''; await loadAll(); }
+
+/*------------------------- 查看记录弹窗 -------------------------*/
+async function openViewDialog(memberId){
+  currentViewMemberId = memberId;
+  const m = members.find(x=>x.id===memberId);
+  if (!m) return;
+  $viewTitle.textContent = `${m.name} 的记录`; 
+
+  // KPIs
+  const s = statsByMember.get(m.id) || { totals:{}, last:null };
+  const chips = [];
+  const chip = (label, total) => `<div class="box"><b>${label}</b><span class="subtle">${total}</span></div>`;
+  chips.push(chip("静坐总数", s.totals[FIXED_METRIC] || 0));
+  ITEM_FOR_DROPDOWN.forEach(it => chips.push(chip(it, s.totals[it] || 0)));
+  $viewKpis.innerHTML = chips.join("");
+
+  // 选择器（无对勾，仅块高亮）
+  const sel = new Set([m.disp_metric1, m.disp_metric2].filter(Boolean));
+  $pickArea.innerHTML = ITEM_FOR_DROPDOWN.map(it=>`<div class="check-item ${sel.has(it)?'on':''}" data-it="${it}">${it}</div>`).join("");
+  function updatePickCount(){ const count=$pickArea.querySelectorAll('.check-item.on').length; $pickCount.textContent = `已选 ${count} / 2`; }
+  updatePickCount();
+  $pickArea.querySelectorAll('.check-item').forEach(div=>{ div.onclick=()=>{ div.classList.toggle('on'); const boxes=[...$pickArea.querySelectorAll('.check-item.on')]; if(boxes.length>2){ div.classList.remove('on'); return; } updatePickCount(); }; });
+
+  $btnSaveDisplay.onclick = async ()=>{
+    const picks = [...$pickArea.querySelectorAll('.check-item.on')].map(el=>el.dataset.it);
+    const ok = await callRpc('set_member_display', { p_member_id: m.id, p1: picks[0] || null, p2: picks[1] || null });
+    if (!ok) {
+      const { error } = await supabase.from('members').update({ disp_metric1: picks[0] || null, disp_metric2: picks[1] || null }).eq('id', m.id);
+      if (error) { alert('保存失败：'+error.message); return; }
+    }
+    alert('已保存展示项目');
+    await loadAll();
+  };
+
+  // 记录表 + 过滤
+  const options = ["全部项目", ...ITEM_OPTIONS];
+  $filterItem.innerHTML = options.map(x=>`<option>${x}</option>`).join("");
+  $filterItem.onchange = ()=> reloadRecordsInView();
+  await reloadRecordsInView();
+  $dlgView.showModal();
+}
+
+async function reloadRecordsInView(){
+  const id = currentViewMemberId; if(!id) return;
+  const filter = $filterItem.value || '全部项目';
+  let q = supabase.from('records')
+    .select('id,item,quantity,note,submitted_at')
+    .eq('member_id', id)
+    .eq('is_deleted', false)
+    .order('submitted_at', { ascending:false });
+  if (filter && filter !== '全部项目') q = q.eq('item', filter);
+  const { data, error } = await q; if (error) { alert('读取失败：'+error.message); return; }
+  $totalRows.textContent = data.length;
+  $tbodyRecords.innerHTML = data.map(r=>`<tr data-id="${r.id}"><td>${fmtCN(r.submitted_at)}</td><td>${r.item}</td><td>${r.quantity}</td><td>${escapeHtml(r.note||'')}</td><td class='row-actions'><button class='btn warn btn-del'>删除</button></td></tr>`).join("");
+  $tbodyRecords.querySelectorAll('.btn-del').forEach(btn=>{ btn.onclick=async(e)=>{ const tr=e.target.closest('tr'); const rid=Number(tr.dataset.id); if(!confirm('确认删除该记录？（软删除 is_deleted=true）')) return; const ok=await callRpc('soft_delete_record',{p_id:rid}); if(!ok){ const {error}=await supabase.from('records').update({is_deleted:true}).eq('id',rid); if(error){ alert('删除失败：'+error.message); return; } } await reloadRecordsInView(); await loadAll(); }; });
+}
+
+/*------------------------- 添加记录 -------------------------*/
+$btnAdd.onclick = ()=> $dlgAdd.showModal();
+$formAdd.onsubmit = async (e)=>{
+  e.preventDefault();
+  const payload = { member_id:Number($addMember.value), item:$addItem.value, quantity:Number($addQty.value||0), note:$addNote.value||'' };
+  const { data, error } = await supabase.from('records').insert(payload).select().single();
+  if (error) { alert('提交失败：'+error.message); return; }
+
+  // 可选：同步更新“视频进度”
+  const epVal = $addVideoEp.value;
+  if (epVal !== '') {
+    const ep = Number(epVal);
+    if (!Number.isNaN(ep) && ep>0 && ep<=144) {
+      await saveVideoEp(payload.member_id, ep);
+    }
+  }
+
+  $dlgAdd.close();
+  $addQty.value = 1; $addNote.value = ''; $addVideoEp.value='';
+  addRecordToStats(data); renderAll();
+  await loadAll();
+};
+
+/* ------------------------ RPC 辅助 ------------------------ */
+async function callRpc(name, args){ try{ const { error } = await supabase.rpc(name, args); if (error) { console.warn('rpc failed', name, error.message); return false; } return true; }catch(e){ console.warn('rpc error', name, e); return false; } }
+async function saveMemberByRpcOrUpdate(id, patch){ const ok = await callRpc('update_member',{ p_id:id, p_name:patch.name??null, p_def:patch.disp_metric1??null, p_pin:null }); if(!ok){ const payload = { name:patch.name, disp_metric1:patch.disp_metric1 }; const { error } = await supabase.from('members').update(payload).eq('id', id); if (error) alert('保存失败：'+error.message); } }
+
+/* 新增：保存视频集数（有 RPC 则优先走 RPC） */
+async function saveVideoEp(memberId, ep){
+  try{
+    let ok = await callRpc('set_member_video_ep', { p_id: memberId, p_ep: ep });
+    if (!ok) {
+      const { error } = await supabase.from('members').update({ video_ep: ep }).eq('id', memberId);
+      if (error) { alert('保存失败：'+error.message); return false; }
+    }
+    const m = members.find(x=>x.id===memberId); if (m) m.video_ep = ep;
+    return true;
+  }catch(err){ console.error(err); alert('保存失败'); return false; }
+}
+
+/* ------------------------ 工具函数 ------------------------ */
+function escapeHtml(s){ return (s??'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[m])); }
+</script>
+</body>
+</html>
